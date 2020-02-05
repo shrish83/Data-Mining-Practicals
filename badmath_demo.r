@@ -1,0 +1,12 @@
+library(editrules)
+badmath<- c(1,2,3,4/0,0/0,NA)
+badmath
+is.na(badmath)
+is.nan(badmath)
+is.infinite(badmath)
+is.finite(badmath)
+which(is.na(badmath))
+which(is.nan(badmath))
+length(which(is.finite(badmath)))
+is.numeric(badmath)
+length(which(is.na(badmath)))
