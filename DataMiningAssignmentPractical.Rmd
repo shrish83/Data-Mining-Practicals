@@ -1,0 +1,1450 @@
+---
+title: "Data Mining Practicals"
+date: May 12, 2020
+geometry: margin=2cm
+output: 
+  pdf_document:
+    highlight: tango
+    fig_width: 5
+    fig_height: 4
+font_size: 16pt
+---
+
+
+#### Submitted by: Shrishti Vaish
+#### Roll no: 5726
+#### Course: B.sc(H) Computer Science, III Year, Section-B
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+### This document consists of the Data Mining practicals along with their output in R markdown format.
+
+
+## **Question 1**
+
+_Create a file "people.txt" and:_
+
+_i) Read the data from the file "people.txt"_
+
+_ii) Create a ruleset that contain rules to check for the following conditions:_
+
+_1) The age should be in the range 0-150_
+
+_2) The age should be greater than years married_
+
+_3) The status should be married or single or widowed_
+
+_4) If age is less than 18 the agegroup should be child, if age is between 18 and 65 the agegroup should be adult, if age is more than 65 the agegroup should be elderly._
+
+_iii) Check whether ruleset is violated by the data in the file "people.txt"_
+
+_iv) Summarize the results obtained in part (iii)_
+
+_v) Visualize the results obtained in part (iii)_
+
+
+### Package Installation
+
+```{r message=FALSE, results='hide', warning=FALSE}
+#install.packages("editrules")
+library(editrules)
+```
+
+A file named _people.txt_ is already created with the mentioned data. I have named the file as _table.txt_. 
+
+### Reading the file:
+
+```{r message=FALSE}
+setwd("~/R/Data Mining/Q1")
+filename = read.table("table.txt", header=TRUE)  #part1
+
+filename
+```
+
+
+### Creating RuleSet _E_ as _check_
+
+```{r message=FALSE}
+                            #part2 with 'check' as 'E'          
+check = editset(expression(                                  Age>=0,Age<=150,Age>yrsmarried,
+  status %in% c('single', 'married','widowed'),
+  if(Age<18) agegroup =='child',
+  if(Age>18 && Age<=65) agegroup=='adult',
+  if(Age>65) agegroup=='elderly'
+))
+check
+summary(check)
+```
+
+
+**USing method _Violated Edits_ to check any existing violations in our ruleset**
+
+```{r message=FALSE}
+clean =violatedEdits(check,filename)      #part3
+clean
+###View(clean)
+```
+
+
+**Summarization**
+
+```{r message=FALSE}
+summary(clean)   #part4
+
+```
+
+
+**Visualization**
+
+```{r message=FALSE, results='hide'}
+pie(table(clean))                           #part5
+barplot(table(clean))
+
+```
+
+
+
+## **Question 2**
+
+_Q2.Perform the following preprocessing tasks on the dirty_iris dataset._
+
+_i) Calculate the number and percentage of observations that are complete._
+
+_ii) Replace all the special values in data with NA._
+
+_iii) Define these rules in a separate text file and read them._
+
+_(Use edit file function in R(package edit rules). Use similar function in Python)._
+
+_Print the resulting constraint object._
+
+_–Species should be one of the following values: setosa, versicolor or virginica._
+
+_–All measured numerical properties of an iris should be positive._
+
+_–The petal length of an iris is at least 2times its petal width._
+
+_–The sepal length of an iris cannot exceed 30cm._
+
+_–The sepals of an iris are longer than its petals._
+
+_iv) Determine how often each rule is broken (violatedEdits). Also summarize and plot the result._
+
+_v) Find outliers in sepal length using boxplot and boxplot.stats._
+
+
+### Package Installation
+
+```{r message=FALSE, results='hide', warning=FALSE}
+#install.packages("editrules")
+library(editrules)
+```
+
+#### _Load the dirty_iris dataset_
+
+```{r message=FALSE}
+setwd("~/R/Data Mining/Q2")
+fl = read.csv("table.csv")   
+#fl
+#View(fl)
+
+```
+
+
+#### _Filtering out the complete cases_
+
+```{r message=FALSE}
+#is.na(fl)
+cc<-complete.cases(fl)
+#cc
+
+head(fl)
+#class(fl)
+
+as.numeric(complete.cases(fl))   #true/false to 1/0
+
+a = sum(as.numeric(complete.cases(fl)))
+a
+
+```
+
+
+#### _Calculating percentage of observations_
+
+```{r message=FALSE}
+
+# nrow() gives total no. of rows
+nr_total<-nrow(fl)                              #part1
+nr_total
+
+#percent_compute <- 100 * (cc/nr_total)           #part1
+#percent_compute
+
+compute <- 100 * a/nr_total
+compute
+
+```
+
+
+#### _Filtering out NA values_
+
+```{r message=FALSE}
+is.na(fl) <- sapply(fl,is.infinite)    #Part2
+head(is.na(fl))
+#View(fl)
+```
+
+
+#### _Creating a separate Ruleset File_
+
+```{r message=FALSE}
+setwd("~/R/Data Mining/Q2")
+efl = editfile("ruleset.txt")     #Part3
+efl
+```
+
+#### _Checking any Violations_
+
+```{r message=FALSE}
+clean = violatedEdits(efl,fl)            #Part4
+head(clean)
+#View(clean)
+
+summary(clean)
+
+#class(clean)
+#plot(clean)
+#density(table(clean))
+#plot(density(table(clean)))
+#barplot(table(clean))
+#pie(table(clean))
+```
+
+#### _Finding Outliers via using Visualizations_
+
+```{r message=FALSE}
+boxplot(fl)        #Part5
+
+boxplot(fl$Sepal.Length)
+
+boxplot.stats(fl$Sepal.Length)
+
+```
+
+
+## **Question 3**
+
+_Load the data from wine dataset. Check whether all attributes are standardized or not (mean is 0 and standard deviation is 1). If not, standardize the attributes. Do the same with iris dataset._
+
+
+#### **Package Installation**
+
+
+```{r message=FALSE, results='hide', warning=FALSE}
+
+#install.packages("caret")
+library(caret)
+
+```
+
+
+#### **Load the Dataset**
+
+```{r message=FALSE}
+setwd("~/R/Data Mining/Q3")
+wine_dat <- read.csv("wine.csv", header = T)
+head(wine_dat)
+
+wine_dat1=wine_dat
+```
+
+
+#### **Standardizing Dataset**
+
+```{r message=FALSE}
+
+pre_wine_dat1=preProcess(wine_dat1,method=c("center","scale"))
+head(pre_wine_dat1)
+```
+
+
+#### **Summarization Of Preprocessed Data**
+
+```{r message=FALSE}
+summary(pre_wine_dat1)
+
+```
+
+
+#### **Mean of Dataset**
+
+```{r message=FALSE}
+
+mean_wine_dat=predict(pre_wine_dat1,wine_dat1)
+head(mean_wine_dat)
+
+summary(mean_wine_dat)
+```
+
+
+#### **Standard Deviation of Dataset**
+
+```{r message=FALSE}
+
+sd(mean_wine_dat$Wine)
+```
+
+
+#### **Using _Iris_ Dataset**
+
+```{r message=FALSE}
+
+iris1 = iris
+summary(iris1)
+
+sd(iris$Sepal.Length)
+sd(iris$Sepal.Width)
+sd(iris$Petal.Length)
+sd(iris$Petal.Width)
+```
+
+
+#### **Standardizing _Iris_ Dataset**
+
+```{r message=FALSE}
+
+preProcessed_iris1 = preProcess(iris1[,1:4], method = c("center","scale"))
+head(preProcessed_iris1)
+
+summary(preProcessed_iris1)
+
+```
+
+
+#### **Mean _Iris_ Dataset**
+
+```{r message=FALSE}
+
+toPredict_iris1=predict(preProcessed_iris1,iris1)
+head(toPredict_iris1)
+
+summary(toPredict_iris1)
+```
+
+
+#### **Standard Deviation _Iris_ Dataset**
+
+```{r message=FALSE}
+
+sd(toPredict_iris1$Sepal.Length)
+sd(toPredict_iris1$Sepal.Width)
+
+sd(toPredict_iris1$Petal.Length)
+sd(toPredict_iris1$Petal.Width)
+```
+
+## **Question 4**
+
+**Run Apriori algorithm to find frequent itemsets and association rules.**\
+**&nbsp;i)Use minimum support as 50% and minimum confidence as 75%.**\
+**&nbsp;ii) Use minimum support as 60% and minimum confidence as 60%.**
+
+**Solution 4**
+
+
+Install and load the necessary packages.
+```{r eval=FALSE}
+install.packages("arules", dependency=TRUE)
+install.packages("arulesViz", dependencies = TRUE)
+install.packages("caTools")
+library(caTools)
+library(arules)
+library(arulesViz)
+```
+
+Load the Groceries package, and analyze its structure
+```{r results='hide', message=FALSE}
+data(Groceries)
+summary(Groceries)
+```
+
+**Itemfrequency plot for Groceries dataset**
+```{r}
+itemFrequencyPlot(Groceries, topN=5)
+```
+
+\newpage
+
+**Generate rules with 50% Minimum Support and 75% Minimum confidence**
+```{r message='hide', results=FALSE}
+rules<- apriori(Groceries, parameter = list(supp=0.5, conf=0.75))
+```
+
+```{r echo=FALSE}
+rules
+```
+
+**Generate rules with 60% Minimum Support and 60% Minimum confidence**
+```{r message='hide', results=FALSE}
+rules<- apriori(Groceries, parameter = list(supp=0.6, conf=0.6))
+```
+
+```{r echo=FALSE}
+rules
+```
+
+For this particular dataset the given values of support and confidence do not generate any rules. So we will customize the values of support and confidence
+
+```{r message='hide', results=FALSE}
+rules<- apriori(Groceries, parameter = list(supp=0.001, conf=0.5))
+rules<-sort(rules, by="confidence", decreasing = TRUE)
+```
+
+Inspecting top 10 rules
+```{r }
+inspect(rules[1:10])
+```
+
+\newpage
+
+Plotting top 20 rules
+```{r results='hide', message=FALSE}
+plot(rules[1:20])
+```
+
+Using different types of plots for different representations of the rules
+```{r eval=FALSE}
+plot(rules[1:20], method="graph", control = list(type = "items"))
+plot(rules[1:20], method="paracoord", control = list(reorder = TRUE))
+plot(rules[1:20], method ="matrix")
+plot(rules[1:20], method="grouped")
+```
+
+```{r echo=FALSE, message='hide',warning=FALSE, results=FALSE}
+plot(rules[1:20], method="graph", control = list(type = "items"))
+```
+
+
+```{r echo=FALSE, message='hide',warning=FALSE, results=FALSE}
+plot(rules[1:20], method="paracoord", control = list(reorder = TRUE))
+```
+
+
+```{r echo=FALSE, message='hide',warning=FALSE, results=FALSE}
+plot(rules[1:20], method ="matrix")
+```
+
+
+```{r echo=FALSE, message='hide',warning=FALSE, results=FALSE}
+plot(rules[1:20], method="grouped")
+```
+
+
+
+
+
+
+
+## **Question 5**
+
+_UseNaivebayes,K-nearest,and Decisiontree classification algorithms and build    classifiers. Divide the dataset into training and test set._
+_Compare the accuracy of the different classifiers under the following situations:_
+
+_5.1 a)Training set=75%, Testset=25%_ 
+     _b)Training set=66.6% (2/3rd of total), Test set=33.3%_
+
+_5.2 Training set is chosen by i)holdout method ii) Random subsampling iii) Cross-Validation. Compare the accuracy of the classifiers obtained._
+
+_5.3 Data is scaled to standard format._
+
+
+## Dataset Used:
+**Breast Cancer Wisconsin**
+
+_Abstract: Original Wisconsin Breast Cancer Database_
+
+Samples arrive periodically as Dr. Wolberg reports his clinical cases. The database therefore reflects this chronological grouping of the data.
+The data is collected so  as to diagnose whether the cancer is Malignant or Benign based on other attributes collected so far.
+Column named _diagnose_ represents the class of tumor i.e a two level factor: Malignant(M) or Benign(B).
+
+The same dataset can be downloaded from UCI Machine Learning FTP Server at the following link:
+[https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/]
+
+_Attribute Information:_
+
+1. Sample code number: id number
+2. Clump Thickness: 1 - 10
+3. Uniformity of Cell Size: 1 - 10
+4. Uniformity of Cell Shape: 1 - 10
+5. Marginal Adhesion: 1 - 10
+6. Single Epithelial Cell Size: 1 - 10
+7. Bare Nuclei: 1 - 10
+8. Bland Chromatin: 1 - 10
+9. Normal Nucleoli: 1 - 10
+10. Mitoses: 1 - 10
+11. Class: (2 for benign, 4 for malignant)
+
+### Package Installation
+
+```{r setup1, message=FALSE, results='hide', warning=FALSE}
+#install.packages("caTools") #For splitting the data
+
+#install.packages("caret") #For building the confusion matrix
+
+
+library(caTools)
+library(caret)
+```
+
+#### **Load the Dataset**
+
+Read the dataset and use complete cases as in remove partial rows hence clean the data before applying any algorithm.
+
+```{r import data, results='hide', message=FALSE}
+real_df <- read.csv("C:/Users/Swapnil Kumar Vaish/Documents/R/Data Mining/Q5/BCW_data.csv")
+
+real_df$X <- NULL
+
+temp_df <- real_df
+temp_df$diagnosis <- as.factor(temp_df$diagnosis)
+
+
+num_rows <- nrow(temp_df)
+
+```
+
+
+
+### **a) Naive Bayes**
+
+Load the package necessary for the naive bayes classifier.
+
+```{r pkg_e1071, results='hide', message=FALSE, warning=FALSE}
+#install.packages("e1071") #For using the Naive Bayes Classifier
+
+library(e1071)
+
+```
+```{r include=FALSE}
+accuracy_nb <- numeric()
+```
+
+
+#### _Holdout Method with 75% of training set and 25% of test set_
+1) Set a random seed.
+2) Split the dataset as mentioned above.
+3) Apply the model.
+
+
+
+```{r holdout75, results='hide', message=FALSE}
+set.seed(1011)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+training_set = subset(temp_df, split == T)
+test_set = subset(temp_df,split == F) 
+dim(training_set)
+dim(test_set)
+
+model<-naiveBayes(training_set$diagnosis~.,data=training_set)
+
+#Using the Predict method from statistics package to evaluate the class of tumor for the Data set using our model
+pred<-predict(model, test_set[,-2])
+```
+
+
+
+
+#### _Contingency Table and accuracy_
+
+
+```{r confMat75}
+
+cfm<-confusionMatrix(pred,test_set$diagnosis)
+cfm$table
+
+```
+
+```{r accuracy_nb, include=FALSE}
+accuracy_nb<-c(accuracy_nb,cfm$overall['Accuracy'])
+```
+
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+#### _Holdout Method with 66.6% of training set and 33.3% of test set_
+1) Set a random seed.
+2) Split the dataset as mentioned above.
+3) Apply the model.
+
+
+```{r holdout66.6, results='hide', message=FALSE}
+set.seed(2010)
+split<-sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+training_set<-subset(temp_df, split == T)
+test_set<-subset(temp_df, split == F)
+dim(training_set)
+dim(test_set)
+
+model<-naiveBayes(training_set$diagnosis~.,data=training_set)
+pred<-predict(model, test_set[,-2])
+
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r ConfMat66.6}
+cfm<-confusionMatrix(pred,test_set$diagnosis)
+cfm$table
+```
+```{r include=FALSE}
+accuracy_nb<-c(accuracy_nb, cfm$overall['Accuracy'])
+```
+
+```{r accuracy_nb66.6}
+cfm$overall['Accuracy']
+```
+
+
+#### _Random Subsampling with 75% of training set and 25% of test set_
+
+Random Subsampling is simply repeating the holdout method multipe times to improve the accuracy.
+Here we repeat the holdout method 10 times.
+
+_Along with Confusion matrix and accuracy_
+
+```{r Subsamp75,  results='hide', message=FALSE}
+acc <- c()
+set.seed(3333)
+for(i in 1:10){
+  split <- sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+  training_set<-subset(temp_df, split == T)
+  test_set<-subset(temp_df, split == F)
+  dim(training_set)
+  dim(test_set)
+  
+  
+  model<-naiveBayes(training_set$diagnosis~.,data=training_set)
+  pred<-predict(model, test_set[,-2])
+  
+  cfm<-confusionMatrix(pred,test_set$diagnosis)
+  acc<-c(acc,cfm$overall['Accuracy'])
+}
+mean(acc)  #average of accuracy
+```
+
+
+```{r include=FALSE}
+accuracy_nb<-c(accuracy_nb, mean(acc))
+```
+```{r echo=FALSE}
+cat("Average of accuracy: ",mean(acc))  #average of accuracy
+
+```
+
+
+
+#### _Random Subsampling with 66.6% of training set and 33.3% of test set_
+
+Random Subsampling is simply repeating the holdout method multipe times to improve the accuracy.
+Here we repeat the holdout method 10 times.
+
+_Along with Confusion matrix and accuracy_
+
+```{r Subsamp66.6,  results='hide', message=FALSE}
+acc <- c()
+set.seed(3333)
+for(i in 1:10){
+  split <- sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+  training_set<-subset(temp_df, split == T)
+  test_set<-subset(temp_df, split == F)
+  dim(training_set)
+  dim(test_set)
+  
+  
+  model<-naiveBayes(training_set$diagnosis~.,data=training_set)
+  pred<-predict(model, test_set[,-2])
+  
+  cfm<-confusionMatrix(pred,test_set$diagnosis)
+  acc<-c(acc,cfm$overall['Accuracy'])
+}
+mean(acc)  #average of accuracy
+```
+
+
+```{r include=FALSE}
+accuracy_nb<-c(accuracy_nb, mean(acc))
+```
+```{r echo=FALSE}
+cat("Average of accuracy: ",mean(acc))  #average of accuracy
+
+```
+
+
+#### _Cross Validation with 75% of training set and 25% of test set_
+
+Cross-validation is a statistical method used to estimate the skill of machine learning models.
+The procedure has a single parameter called k that refers to the number of groups that a given data sample is to be split into. As such, the procedure is often called k-fold cross-validation. 
+Then a single partition of the dataset is taken as the test set, and rest k-1 partitions are used as the training set. This procedure is repeated for every unique single partition we make.
+ We only need to specify the value for the number: k, and the classifier algorithm to be used.
+ 
+
+```{r warning=FALSE, results='hide', message=FALSE}
+#install.packages("naivebayes") #for naive bayes
+library(naivebayes)
+
+set.seed(5256)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+training_set<-subset(temp_df, split == T)
+test_set<-subset(temp_df, split == F)
+dim(training_set)
+dim(test_set)
+
+model<-train(diagnosis~., data = training_set, method='naive_bayes', trControl = trainControl(method = 'cv', number = 10))
+
+p<-predict(model, test_set, method='class')
+
+```
+
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm<-confusionMatrix(p,test_set$diagnosis)
+cfm$table
+```
+```{r include=FALSE}
+accuracy_nb<-c(accuracy_nb, cfm$overall['Accuracy'])
+```
+
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+#### _Cross Validation with 66.6% of training set and 33.3% of test set_
+
+
+```{r warning=FALSE, message=FALSE, results='hide'}
+#install.packages("naivebayes") #for naive bayes
+library(naivebayes)
+
+set.seed(6756)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+training_set<-subset(temp_df, split == T)
+test_set<-subset(temp_df, split == F)
+dim(training_set)
+dim(test_set)
+
+model<-train(diagnosis~., data = training_set, method='naive_bayes', trControl = trainControl(method = 'cv', number = 10))
+
+p<-predict(model, test_set, method='class')
+
+```
+
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm<-confusionMatrix(p,test_set$diagnosis)
+cfm$table
+```
+```{r include=FALSE}
+accuracy_nb<-c(accuracy_nb, cfm$overall['Accuracy'])
+```
+
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+
+### **b) KNN Method**
+
+#### Package Installation for KNN method
+```{r results='hide', message=FALSE}
+#install.packages("class", dependencies = TRUE)
+library(class)
+
+accuracy_knn<-numeric()
+```
+
+
+#### _Holdout Method with 75% of training set and 25% of test set_
+
+**Normalizing the data to a specific range**
+```{r message=FALSE, results='hide'}
+func_normalize <- function(x) { 
+  return((x- min(x))/(max(x)- min(x)))
+} 
+```
+
+
+**Further manipulation in the dataset**
+```{r message=FALSE,results='hide'}
+real_df$id<- NULL
+temp_df <- real_df
+temp_df$diagnosis <- as.factor(as.integer(temp_df$diagnosis))  # For KNN all the features must be numeric, Here diagnosis was a factor of characters, which is converted to numeric factor
+num_rows <- nrow(temp_df)
+```
+
+
+**Applying Normalization to the dataset:**
+```{r}
+num_col<-2:31  #excluding column 1 as factors shouldn't be normalized
+df_new <- as.data.frame(lapply(temp_df[,num_col], func_normalize))
+summary(df_new[,c(1:3)])
+
+```
+
+
+
+**Applying KNN on the dataset**
+
+```{r message=FALSE, results='hide'}
+set.seed(1011)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+training_set = subset(temp_df, split == T)
+test_set = subset(temp_df,split == F) 
+
+trainingKNN <- as.data.frame(lapply(training_set[,num_col], func_normalize))
+trainingKNN<-cbind(trainingKNN, training_set$diagnosis)
+names(trainingKNN)[31]<-"diagnosis"
+
+testKNN<- as.data.frame(lapply(test_set[,num_col], func_normalize))
+testKNN<-cbind(testKNN, test_set$diagnosis)
+names(testKNN)[31]<-"diagnosis"
+
+
+training_target<-trainingKNN[,31]
+test_target<-testKNN[,31]
+
+
+m1<-knn(trainingKNN, testKNN, cl = training_target, k=25)
+
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm<-confusionMatrix(test_target, m1)
+cfm$table
+```
+
+```{r include=FALSE}
+accuracy_knn <- c(accuracy_knn, cfm$overall['Accuracy'])
+```
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+#### _Holdout Method with 66.6% of training set and 33.3% of test set_
+
+
+
+```{r message=FALSE, results='hide'}
+set.seed(1011)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+training_set = subset(temp_df, split == T)
+test_set = subset(temp_df,split == F) 
+
+trainingKNN <- as.data.frame(lapply(training_set[,num_col], func_normalize))
+trainingKNN<-cbind(trainingKNN, training_set$diagnosis)
+names(trainingKNN)[31]<-"diagnosis"
+
+testKNN<- as.data.frame(lapply(test_set[,num_col], func_normalize))
+testKNN<-cbind(testKNN, test_set$diagnosis)
+names(testKNN)[31]<-"diagnosis"
+
+
+training_target<-trainingKNN[,31]
+test_target<-testKNN[,31]
+
+
+m1<-knn(trainingKNN, testKNN, cl = training_target, k=25)
+
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm<-confusionMatrix(test_target, m1)
+cfm$table
+```
+
+```{r include=FALSE}
+accuracy_knn <- c(accuracy_knn, cfm$overall['Accuracy'])
+```
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+#### _Random Subsampling with 75% of training set and 25% of test set_
+
+```{r}
+acc <- c()
+set.seed(3333)
+for(i in 1:10){
+  split <- sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+training_set = subset(temp_df, split == T)
+test_set = subset(temp_df,split == F) 
+
+trainingKNN <- as.data.frame(lapply(training_set[,num_col], func_normalize))
+trainingKNN<-cbind(trainingKNN, training_set$diagnosis)
+names(trainingKNN)[31]<-"diagnosis"
+
+testKNN<- as.data.frame(lapply(test_set[,num_col], func_normalize))
+testKNN<-cbind(testKNN, test_set$diagnosis)
+names(testKNN)[31]<-"diagnosis"
+
+
+training_target<-trainingKNN[,31]
+test_target<-testKNN[,31]
+
+ m1<-knn(trainingKNN, testKNN, cl = training_target, k=25)
+  
+  
+  cfm<-confusionMatrix(test_target, m1)
+  acc<-c(acc,cfm$overall['Accuracy'])
+}
+mean(acc)
+
+```
+
+```{r include=FALSE}
+accuracy_knn<-c(accuracy_knn, mean(acc))
+```
+
+```{r echo=FALSE}
+cat("Average of accuracy: ",mean(acc))
+```
+
+
+
+#### _Random Subsampling with 66.6% of training set and 33.3% of test set_
+
+```{r}
+acc <- c()
+set.seed(3333)
+for(i in 1:10){
+  split <- sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+training_set = subset(temp_df, split == T)
+test_set = subset(temp_df,split == F) 
+
+trainingKNN <- as.data.frame(lapply(training_set[,num_col], func_normalize))
+trainingKNN<-cbind(trainingKNN, training_set$diagnosis)
+names(trainingKNN)[31]<-"diagnosis"
+
+testKNN<- as.data.frame(lapply(test_set[,num_col], func_normalize))
+testKNN<-cbind(testKNN, test_set$diagnosis)
+names(testKNN)[31]<-"diagnosis"
+
+
+training_target<-trainingKNN[,31]
+test_target<-testKNN[,31]
+
+ m1<-knn(trainingKNN, testKNN, cl = training_target, k=25)
+  
+  
+  cfm<-confusionMatrix(test_target, m1)
+  acc<-c(acc,cfm$overall['Accuracy'])
+}
+mean(acc)
+
+```
+
+```{r include=FALSE}
+accuracy_knn<-c(accuracy_knn, mean(acc))
+```
+
+
+```{r echo=FALSE}
+cat("Average of accuracy with 66.6% split: ",mean(acc))
+```
+
+
+
+
+#### _Cross Validation with 75% of training set and 25% of test set_
+```{r message=FALSE, results='hide'}
+set.seed(5555)
+split<-sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+training_set<-subset(temp_df, split==TRUE)
+test_set<-subset(temp_df, split==FALSE)
+
+model<-train(diagnosis~., data = training_set, method='knn', trControl = trainControl(method = 'cv', number = 20))
+
+p<-predict(model, test_set, method='class')
+
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm<-confusionMatrix(test_set[,1], p)
+cfm$table
+```
+
+```{r include=FALSE}
+accuracy_knn<-c(accuracy_knn, cfm$overall['Accuracy'])
+```
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+#### _Cross Validation with 66.6% of training set and 33.3% of test set_
+```{r message=FALSE, results='hide'}
+set.seed(5555)
+split<-sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+training_set<-subset(temp_df, split==TRUE)
+test_set<-subset(temp_df, split==FALSE)
+
+model<-train(diagnosis~., data = training_set, method='knn', trControl = trainControl(method = 'cv', number = 20))
+
+p<-predict(model, test_set, method='class')
+
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm<-confusionMatrix(test_set[,1], p)
+cfm$table
+```
+
+```{r include=FALSE}
+accuracy_knn<-c(accuracy_knn, cfm$overall['Accuracy'])
+```
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+
+### **c) Decision Trees**
+
+
+**Intallation of packages**
+```{r results='hide', message=FALSE ,warning=FALSE}
+#install.packages("rpart")
+#install.packages("rpart.plot")
+library(rpart)
+library(rpart.plot)
+```
+```{r include=FALSE}
+accuracy_dtm<-numeric()
+```
+
+
+
+#### _Holdout method with 75% of training set and 25% of test set_
+
+```{r results='hide', message=FALSE}
+set.seed(1011)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+training_set = subset(temp_df, split == T)
+test_set = subset(temp_df,split == F) 
+dim(training_set)
+dim(test_set)
+
+dtm <- rpart(diagnosis~., training_set,method = "class")
+
+p<- predict(dtm,test_set,type = "class")
+
+```
+
+
+**for better illustration**
+```{r}
+rpart.plot(dtm)
+#rpart.plot(dtm,type = 4,extra = 101 )
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm <- confusionMatrix(p,test_set$diagnosis)
+cfm$table
+```
+
+```{r include=FALSE}
+accuracy_dtm<-c(accuracy_dtm, cfm$overall['Accuracy'])
+```
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+#### _Holdout method with 66.6% of training set and 33.3% of test set_
+
+```{r results='hide', message=FALSE}
+set.seed(1011)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+training_set = subset(temp_df, split == T)
+test_set = subset(temp_df,split == F) 
+dim(training_set)
+dim(test_set)
+
+dtm <- rpart(diagnosis~., training_set,method = "class")
+
+p<- predict(dtm,test_set,type = "class")
+
+```
+
+
+**for better illustration**
+```{r}
+rpart.plot(dtm)
+#rpart.plot(dtm,type = 4,extra = 101 )
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm <- confusionMatrix(p,test_set$diagnosis)
+cfm$table
+```
+
+
+```{r include=FALSE}
+accuracy_dtm<-c(accuracy_dtm, cfm$overall['Accuracy'])
+```
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+#### _Random Subsampling with 75% of training set and 25% of test set_
+
+```{r results='hide', message=FALSE}
+acc <- c()
+set.seed(3333)
+for(i in 1:10){
+  s <- sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+  training_set<-subset(temp_df, split == T)
+  test_set<-subset(temp_df, split == F)
+  dim(training_set)
+  dim(test_set)
+  dtm<-rpart(diagnosis~.,training_set, method = "class")
+  
+  p<-predict(dtm, test_set, type = "class")
+  
+  dti<-confusionMatrix(p,test_set$diagnosis)
+  acc<-c(acc,dti$overall['Accuracy'])
+}
+
+mean(acc)   
+
+```
+
+```{r include=FALSE}
+accuracy_dtm<-c(accuracy_dtm, mean(acc))
+```
+
+```{r echo=FALSE}
+cat("Average of accuracy: ",mean(acc))
+```
+
+
+
+#### _Random Subsampling with 66.6% of training set and 33.3% of test set_
+
+```{r results='hide', message=FALSE}
+acc <- c()
+set.seed(4833)
+for(i in 1:10){
+  s <- sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+  training_set<-subset(temp_df, split == T)
+  test_set<-subset(temp_df, split == F)
+  dim(training_set)
+  dim(test_set)
+  dtm<-rpart(diagnosis~.,training_set, method = "class")
+  
+  p<-predict(dtm, test_set, type = "class")
+  
+  dti<-confusionMatrix(p,test_set$diagnosis)
+  acc<-c(acc,dti$overall['Accuracy'])
+}
+
+mean(acc)   
+
+```
+
+```{r include=FALSE}
+accuracy_dtm<-c(accuracy_dtm, mean(acc))
+```
+
+```{r echo=FALSE}
+cat("Average of accuracy: ",mean(acc))
+```
+
+
+
+#### _Cross Validation with 75% of training set and 25% of test set_
+```{r results='hide', message=FALSE}
+set.seed(5256)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.75)
+training_set<-subset(temp_df, split == T)
+test_set<-subset(temp_df, split == F)
+model<-train(diagnosis~., data = training_set, method='rpart', trControl = trainControl(method = 'cv', number = 10))
+
+p<-predict(model, test_set, method='class')
+
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm<-confusionMatrix(p,test_set$diagnosis)
+cfm$table
+```
+
+
+```{r include=FALSE}
+accuracy_dtm<-c(accuracy_dtm, cfm$overall['Accuracy'])
+```
+
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+#### _Cross Validation with 66.6% of training set and 33.3% of test set_
+```{r results='hide', message=FALSE}
+set.seed(5256)
+split <- sample.split(temp_df$diagnosis, SplitRatio = 0.666)
+training_set<-subset(temp_df, split == T)
+test_set<-subset(temp_df, split == F)
+model<-train(diagnosis~., data = training_set, method='rpart', trControl = trainControl(method = 'cv', number = 10))
+
+p<-predict(model, test_set, method='class')
+
+```
+
+
+#### _Contingency Table and accuracy_
+
+```{r}
+cfm<-confusionMatrix(p,test_set$diagnosis)
+cfm$table
+```
+
+
+```{r include=FALSE}
+accuracy_dtm<-c(accuracy_dtm, cfm$overall['Accuracy'])
+
+```
+```{r}
+cfm$overall['Accuracy']
+```
+
+
+
+### **Accuracy Comparison**
+
+#### _Different  classifiers and their accuracy_
+
+
+```{r include=FALSE}
+library(ggplot2)
+library(reshape2)
+
+df_accuracy <- data.frame(MethodTypes = 1:6, NaiveBayes_Acc = accuracy_nb, KNN_Acc = accuracy_knn, DecisionTrees_Acc = accuracy_dtm)
+
+rownames(df_accuracy)<-c("Holdout Split 0.75","Holdout Spit 0.666","Random Subsampling Split 0.75","Random Subsampling Split 0.666","Cross Validation Split 0.75","Cross Validation Split 0.666")
+
+df_accuracy <- melt(as.matrix(df_accuracy), id.vars="MethodTypes", variable.names="Accuracy")
+
+df_accuracy1 <- df_accuracy[7:24,]
+```
+
+```{r echo=FALSE}
+ggplot(df_accuracy1, aes(Var2, value)) + geom_point(aes(color=Var1, size=3),shape=17, alpha = .90) + labs(x="Classifier", y="Accuracy",color="Split Method")
+```
+```{r include=FALSE}
+rm(list = ls())
+```
+
+
+
+## **Question 6**
+
+_Use Simple Kmeans, DBScan, hierarchical clustering algorithms for clustering. Compare the performance of clusters by changing the\ parameters involved in the algorithms._
+
+
+#### **Package Installation**
+
+```{r results="hide", message=FALSE, warning=FALSE}
+#install.packages("dbscan")   #For implementation of DB-Scan algorithm
+
+library(dbscan)
+library(ggplot2)
+```
+
+&nbsp;
+ 
+Load the `iris` dataset and scale all its numeric rows
+```{r}
+data("iris")
+paste("Summary before scaling")
+summary(iris[,-5])
+irisScaled<-scale(iris[,-5])
+paste("Summary after scaling")
+summary(irisScaled)
+```
+
+&nbsp;
+
+### **a) K-Means Clustering**
+
+This is an `Unsupervised` learning algorithm that tries to cluster data based on their similarity. In K-means clustering we have to specify the number of clusters we want, explicitly.
+
+
+```{r message=FALSE, results="hide"}
+#Specifying number of clusters explicitly
+fitK<- kmeans(x = irisScaled, centers = 3)  
+```
+
+Sizes of the created clusters
+```{r}
+fitK$size
+```
+
+&nbsp;
+
+Confusion Matrix for Original Clusters, and the new clusters
+```{r}
+table(iris$Species, fitK$cluster)
+```
+
+
+**Original Cluster**
+```{r echo=FALSE}
+library(ggplot2)
+ggplot(iris, aes(Petal.Length, Petal.Width, color=Species)) + geom_point() + labs(x="Petal Length", y="Petal Width")
+```
+
+
+**New Cluster**
+```{r echo=FALSE}
+ggplot(iris, aes(Petal.Length, Petal.Width, color=fitK$cluster)) + geom_point() + labs(x="Petal Length", y="Petal Width")
+```
+
+```{r include=FALSE}
+  rm(fitK)
+```
+&nbsp;
+
+
+
+### **b) Hierarchical clustering**
+
+This is an alternative approach which builds a hierarchy, and doesn't require us to specify  the number of clusters beforehand
+
+```{r message=FALSE, results="hide"}
+d<-dist(irisScaled)
+fitH<-hclust(d, "ward.D2")
+cluster<-cutree(fitH,3)
+```
+
+&nbsp;
+
+Create a plot of the cluster and divide it with rectangular cuts
+```{r}
+plot(fitH)
+rect.hclust(fitH,k=3,border = "red")
+```
+
+
+#### _Contingency Table_
+
+Confusion Matrix for Original Clusters, and the new clusters
+
+```{r}
+table(iris$Species, cluster)
+```
+
+
+**Performance of Algorithm**
+
+Here plotting both the data points segregated into original and new clusters. All the points where the inner color does not match the outer color are the ones which are clustered incorrectly.
+
+```{r echo=FALSE}
+library(ggplot2)
+ggplot(iris, aes(Petal.Length, Petal.Width, color = Species)) +
+  geom_point(alpha = 0.5, size = 3.5) + geom_point(col = cluster) +
+  scale_color_manual(values = c('black', 'red', 'green'))
+```
+
+
+&nbsp;
+
+### **c) DBScan Clustering**
+
+In density based clustering, clusters are defined as dense regions of data points separated by low-density regions. Density is measured by the number of data points within some radius.
+
+Plot the K-Nearest neighbors distance and find a threshold from the plot, for the EPS value
+
+```{r}
+kNNdistplot(irisScaled, k = 3)
+abline(h=0.7,col="red",lty=2)
+```
+
+&nbsp;
+
+**Apply DBScan algorithm**
+
+```{r}
+fitD<- dbscan(irisScaled, eps = 0.7, minPts = 5)
+```
+
+
+#### _Contingency Table_
+
+Confusion Matrix for Original Clusters, and the new clusters
+```{r}
+table(iris$Species, fitD$cluster)
+```
+
+```{r include=FALSE}
+fitD$cluster<-fitD$cluster+1
+```
+
+
+&nbsp;
+
+**DBScan Clusters**
+```{r echo=FALSE}
+plot(irisScaled, col=fitD$cluster)
+```
+
+
+
